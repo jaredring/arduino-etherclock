@@ -1,0 +1,15 @@
+[submodule "libs/Ethernet2"]
+	path = libs/Ethernet2
+	url = git://github.com/adafruit/Ethernet2
+[submodule "tools/Arduino-Makefile"]
+	path = tools/Arduino-Makefile
+	url = git://github.com/sudar/Arduino-Makefile
+[submodule "libs/DS3232RTC"]
+	path = libs/DS3232RTC
+	url = git://github.com/JChristensen/DS3232RTC
+[submodule "libs/Time"]
+	path = libs/Time
+	url = git://github.com/PaulStoffregen/Time
+[submodule "libs/LiquidTWI2"]
+	path = libs/LiquidTWI2
+	url = git://github.com/lincomatic/LiquidTWI2

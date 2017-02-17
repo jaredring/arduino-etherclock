@@ -27,3 +27,15 @@
 *.exe
 *.out
 *.app
+
+# Arduino Builds
+*.c.d
+*.cpp.d
+*.c.o
+*.cpp.o
+*.hex
+*.elf
+*.sizeok
+*.cpp.d
+*.cpp.o
+build-*/*
