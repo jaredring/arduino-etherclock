@@ -4,6 +4,12 @@
  *
  * This is just a learning exercise
  *
+ * It Displays the time. and date, and temperature
+ * and adjust the backlight colour of the LCD depending onw hat the temp is doing
+ * Rising - Red
+ * Steady - Blue
+ * Falling - Green
+ *
  */
 
  // Libs from standard Arduino IDE
@@ -38,6 +44,16 @@ LiquidTWI2 lcd(0);
 byte mac[] = {
   0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02
 };
+
+bool show_date = true;
+
+void LCD_clearLine(int line) {
+    lcd.setCursor(0, line);
+    for (int i=0;i<17;i++) {
+        lcd.print(" ");
+    }
+    lcd.setCursor(0, line);
+}
 
 void setup() {
 
@@ -85,13 +101,11 @@ void setup() {
     while (Ethernet.begin(mac) != 1) {
         Serial.println("No response from DHCP. Sleeping."); 
     }
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("IP Address:");
-    lcd.setCursor(0, 1);
+    LCD_clearLine(1);
     lcd.print(Ethernet.localIP());
     delay(5000);
 
+    lcd.clear();
 }
 
 // Maintain our DHCP Lease
@@ -128,9 +142,36 @@ void dhcp_maintain() {
 }
 
 void loop() {
-    delay(10);
+    // A second has elapsed - Update Clock
+    if ((millis() % 1000) == 0) {
+        LCD_clearLine(0);
+        lcd.print("Time: ");
+        lcd.print(hour());
+        lcd.print(":");
+        lcd.print(minute());
+        lcd.print(":");
+        lcd.print(second());
+        if (show_date and second() >= 30) {
+            // Update to show the Temperature
+            LCD_clearLine(1);
+            float tempC = RTC.temperature() /4.0;
+            lcd.print("Temp: ");
+            lcd.print(tempC);
+            lcd.print("C");
+            show_date = !show_date;
+        } else if (not show_date and second() < 30) {
+            // Update to show the Date
+            LCD_clearLine(1);
+            lcd.print("Date: ");
+            lcd.print(day());
+            lcd.print("/");
+            lcd.print(month());
+            lcd.print("/");
+            lcd.print(year());
+            show_date = !show_date;
+        }
+    }
 
     dhcp_maintain();
 }
-
 
