@@ -23,58 +23,8 @@
 #include <DS3232RTC.h>          // https://github.com/JChristensen/DS3232RTC
 #include <Time.h>               // https://github.com/PaulStoffregen/Time
 
-// Ethernet
-#define ETHER_SS    10U         // Ethernet Slave Select D10
-#define ETHER_RST   11U         // Etheret Reset D11
-
-// NTP Details
-unsigned int secsSinceLastNtpReq = 32000;       // Force an NTP update on power on
-const unsigned int secsBetweenNtpReqs = 21600;   // Four Hours
-unsigned int ntpLocalPort = 8123;
-char ntpServer[] = "tranquil.home.thanhandjared.net";
-const int NTP_PACKET_SIZE = 48;
-byte ntpPacketBuffer[NTP_PACKET_SIZE];
-bool ntpResponseRequired = false;
-EthernetUDP ntpUdp;
-
-// Setup the Pins
-// Reserved Pins:
-// Leonardo uses D2 for SDA and D3 for CLK
-// DFRobot W5500 also steals D7, D10 and D11 for Ethernet
-
-#define LCDRED 5
-#define LCDGRN 6
-#define LCDBLU 9
-
-// Older Style LTI_TYPE_MCP23008
-// New RGB Style LTI_TYPE_MCP23017
-#define LCD_BACKPACK_TYPE LTI_TYPE_MCP23008
-// I2C Address of Backback
-LiquidTWI2 lcd(0);
-
-// Set a MAC Address
-// NB: This is an example MAC Address
-// TODO: Derive a unique MAC address from a temperature sensor
-// Ref: Jon Oxer
-byte mac[] = {
-  0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02
-};
-
-const unsigned long TZ_OFFSET_SECS = 36000UL;  // +10 from UTC
-
-// Do we show the date or the temp
-bool show_date = true;
-
-float last_temp = 0.0;  // Are we rising, falling or steady
-
-void LCD_clearLine(int line) {
-    lcd.setCursor(0, line);
-    for (int i=0;i<17;i++) {
-        lcd.print(" ");
-    }
-    lcd.setCursor(0, line);
-}
-
+#include "constants.h"
+#include "utility.h"
 
 void setup() {
     // Reset Ethernet
@@ -89,11 +39,10 @@ void setup() {
     delay(200);
     // Ether Reset Complete
 
-
     // Open serial communications and wait for port to open:
     Serial.begin(9600);
     // this check is only needed on the Leonardo:
-    while (!Serial and millis()<5000) {
+    while (!Serial && millis()<5000) {
         ; // wait for serial port to connect. Needed for native USB port only
     }
     Serial.println("We have a serial console!");
@@ -135,10 +84,11 @@ void setup() {
     lcd.print("Wait for DHCP...");
 
     while (Ethernet.begin(mac) != 1) {
-        Serial.println("No response from DHCP. Sleeping."); 
+        Serial.println("No response from DHCP. Sleeping.");
         delay(5000);
     }
-    LCD_clearLine(1);
+
+    LCD_clearLine(lcd, 1);
     lcd.print(Ethernet.localIP());
     Serial.print("Got IP: ");
     Serial.println(Ethernet.localIP());
@@ -146,40 +96,6 @@ void setup() {
     lcd.clear();
 
     ntpUdp.begin(ntpLocalPort);
-
-}
-
-// Maintainbe our DHCP Lease
-// Based on examples from the Ethernet2 Library
-void dhcp_maintain() {
-    switch (Ethernet.maintain()) {
-        case 1:
-            // Renew FAIL
-            Serial.println("DHCP Renew Failed");
-            // Turn off NTP Fetching
-            break;
-
-        case 2:
-            // Renew Success
-            Serial.println("DHCP Renew Success");
-            break;
-
-        case 3:
-            // Rebind Failed (how is this diff to Renew fail?)
-            Serial.println("DHCP Rebind Failed");
-            // Assume turn off NTP Fetching
-            break;
-
-        case 4:
-            // Rebind Success
-            Serial.println("DHCP Rebind Success");
-            break;
-
-        default:
-            // Shrug
-            break;
-
-    }
 }
 
 void sendNtpRequest(char* ntphost) {
@@ -197,7 +113,7 @@ void sendNtpRequest(char* ntphost) {
     ntpPacketBuffer[14] = 49;
     ntpPacketBuffer[15] = 52;
 
-//    ntpUdp.beginPacket(ntphost, 123);
+    // ntpUdp.beginPacket(ntphost, 123);
     IPAddress tranquil(192, 168, 0, 249);
     ntpUdp.beginPacket(tranquil, 123);
     ntpUdp.write(ntpPacketBuffer, NTP_PACKET_SIZE);
@@ -274,7 +190,7 @@ void updateTime(time_t t) {
 void loop() {
     // A second has elapsed - Update Clock
     if ((millis() % 1000) == 0) {
-        LCD_clearLine(0);
+        LCD_clearLine(lcd, 0);
         lcd.print("Time: ");
         lcd.print(hour());
         lcd.print(":");
@@ -283,7 +199,7 @@ void loop() {
         lcd.print(second());
         if (show_date and second() >= 30) {
             // Update to show the Temperature
-            LCD_clearLine(1);
+            LCD_clearLine(lcd, 1);
             float tempC = RTC.temperature() /4.0;
             lcd.print("Temp: ");
             lcd.print(tempC);
@@ -313,7 +229,7 @@ void loop() {
             show_date = !show_date;
         } else if (not show_date and second() < 30) {
             // Update to show the Date
-            LCD_clearLine(1);
+            LCD_clearLine(lcd, 1);
             lcd.print("Date: ");
             lcd.print(day());
             lcd.print("/");
@@ -343,4 +259,3 @@ void loop() {
 
     dhcp_maintain();
 }
-
