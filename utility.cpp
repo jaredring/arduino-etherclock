@@ -7,8 +7,9 @@
 
 void LCD_clearLine(LiquidTWI2 lcdref, int line) {
     lcdref.setCursor(0, line);
-    for (int i=0;i<17;i++)
-        lcdref.print(" ");
+    char row[16];
+    memset(row, ' ', 16);
+    lcdref.print(row);
     lcdref.setCursor(0, line);
 }
 
