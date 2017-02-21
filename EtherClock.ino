@@ -12,9 +12,10 @@
  *
  */
 
- // Libs from standard Arduino IDE
- #include <Wire.h>
- #include <SPI.h>
+// Libs from standard Arduino IDE
+#include <Wire.h>
+#include <SPI.h>
+#include <stdlib.h>
 
 // Third Party Libs
 #include <Ethernet2.h>          // https://github.com/adafruit/Ethernet2
@@ -178,55 +179,67 @@ void updateTime(time_t t) {
 
 }
 
+void display_date() {
+    // Update to show the Date
+    LCD_clearLine(lcd, 1);
+    char theday[3];
+    char thedate[20];
+    // Ref: https://forum.arduino.cc/index.php?topic=367763.0
+    sprintf(theday, "%s", dayShortStr(weekday()));
+    sprintf(thedate, "%s %2d %s %d", theday, day(), monthShortStr(month()), year());
+    Serial.println(thedate);
+    lcd.print(thedate);
+}
+
+void display_temp() {
+    // Update to show the Temperature
+    LCD_clearLine(lcd, 1);
+    float tempC = RTC.temperature() /4.0;
+    // Ref: http://forum.arduino.cc/index.php/topic,37391.0.html
+    char tc[6];
+    dtostrf(tempC,4,2,tc);
+    char thetemp[16];
+    //char thetemp[16] = "The Temp";
+    sprintf(thetemp,"Temp: %sC", tc);
+    lcd.print(thetemp);
+    Serial.println(thetemp); 
+    if (tempC == last_temp) {
+        // Steady - BLUE
+        digitalWrite(LCDRED, 255);
+        digitalWrite(LCDGRN, 255);
+        digitalWrite(LCDBLU, 0);
+    } else if (tempC > last_temp) {
+        // Rising - RED
+        digitalWrite(LCDRED, 0);
+        digitalWrite(LCDGRN, 255);
+        digitalWrite(LCDBLU, 255);
+    } else {
+        // Falling - GREEN
+        digitalWrite(LCDRED, 255);
+        digitalWrite(LCDGRN, 0);
+        digitalWrite(LCDBLU, 255);
+    }
+    last_temp = tempC;
+}
+
 void loop() {
     // A second has elapsed - Update Clock
     if ((millis() % 1000) == 0) {
         LCD_clearLine(lcd, 0);
-        lcd.print("Time: ");
-        lcd.print(hour());
-        lcd.print(":");
-        lcd.print(minute());
-        lcd.print(":");
-        lcd.print(second());
-        if (show_date and second() >= 30) {
-            // Update to show the Temperature
-            LCD_clearLine(lcd, 1);
-            float tempC = RTC.temperature() /4.0;
-            lcd.print("Temp: ");
-            lcd.print(tempC);
-            lcd.print("C");
-            String message;
-            if (tempC == last_temp) {
-                // Steady - BLUE
-                message = "Temp Steady: ";
-                digitalWrite(LCDRED, 255);
-                digitalWrite(LCDGRN, 255);
-                digitalWrite(LCDBLU, 0);
-            } else if (tempC > last_temp) {
-                // Rising - RED
-                message = "Temp Rising: ";
-                digitalWrite(LCDRED, 0);
-                digitalWrite(LCDGRN, 255);
-                digitalWrite(LCDBLU, 255);
+        char thetime[16];
+        sprintf(thetime, "Time: %02d:%02d:%02d",hour(),minute(),second());
+        lcd.print(thetime);
+
+        if (display_time_secs++ == DISPLAY_INTERVAL) {
+            Serial.println("Switchign displays");
+            if (show_date) {
+                Serial.println("Show Temp");
+                display_temp();
             } else {
-                // Falling - GREEN
-                message = "Temp Falling: ";
-                digitalWrite(LCDRED, 255);
-                digitalWrite(LCDGRN, 0);
-                digitalWrite(LCDBLU, 255);
+                Serial.println("Show Date");
+                display_date();
             }
-            Serial.println(message + last_temp + "C, Now: " + tempC + "C");
-            last_temp = tempC;
-            show_date = !show_date;
-        } else if (not show_date and second() < 30) {
-            // Update to show the Date
-            LCD_clearLine(lcd, 1);
-            lcd.print("Date: ");
-            lcd.print(day());
-            lcd.print("/");
-            lcd.print(month());
-            lcd.print("/");
-            lcd.print(year());
+            display_time_secs = 0;
             show_date = !show_date;
         }
 

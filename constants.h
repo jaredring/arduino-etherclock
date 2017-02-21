@@ -43,3 +43,7 @@ const unsigned long TZ_OFFSET_SECS = 36000UL;  // +10 from UTC
 bool show_date = true;
 
 float last_temp = 0.0;  // Are we rising, falling or steady
+
+const int DISPLAY_INTERVAL = 10; // secs between display changes
+int display_time_secs = 0;
+
