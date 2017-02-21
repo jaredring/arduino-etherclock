@@ -36,3 +36,17 @@ void dhcp_maintain() {
             break;
     }
 }
+
+void reset_ethernet(int SS, int RST) {
+    pinMode(SS, OUTPUT);
+    pinMode(RST, OUTPUT);
+    digitalWrite(SS, LOW);
+    digitalWrite(RST, HIGH);  // Reset Ethernet
+    delay(200);
+    digitalWrite(RST, LOW);   // Push Reset
+    delay(200);
+    digitalWrite(RST, HIGH);  // Release Reset
+    delay(200);
+}
+
+// vimrc: set filetype=arduino

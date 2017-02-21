@@ -10,3 +10,4 @@ const int DHCP_REBIND_SUCCESS = 4;
 
 void LCD_clearLine(LiquidTWI2 lcdref, int line);
 void dhcp_maintain();
+void reset_ethernet(int SS, int RST);

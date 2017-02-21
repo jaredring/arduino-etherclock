@@ -28,16 +28,7 @@
 
 void setup() {
     // Reset Ethernet
-    pinMode(ETHER_SS, OUTPUT);
-    pinMode(ETHER_RST, OUTPUT);
-    digitalWrite(ETHER_SS, LOW);
-    digitalWrite(ETHER_RST, HIGH);  // Reset Ethernet
-    delay(200);
-    digitalWrite(ETHER_RST, LOW);   // Push Reset
-    delay(200);
-    digitalWrite(ETHER_RST, HIGH);  // Release Reset
-    delay(200);
-    // Ether Reset Complete
+    reset_ethernet(ETHER_SS, ETHER_RST);
 
     // Open serial communications and wait for port to open:
     Serial.begin(9600);
